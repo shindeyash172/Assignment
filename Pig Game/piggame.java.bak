@@ -1,0 +1,104 @@
+package com.aurionpro.model;
+
+import java.util.*;
+
+public class PigGame {
+	public static void main(String[] args) {
+		{
+			System.out.println("First Player Starts Playing");
+			int turn = 1;
+			Scanner sc = new Scanner(System.in);
+			char input;
+			System.out.println("Roll or hold? (r/h) : ");
+			input = sc.next().charAt(0);
+			int turnScore = 0;
+			int totalScore = 0;
+			System.out.println("Turn " + turn);
+			while (input == 'r') {
+				int cp = getRandomto6();
+				System.out.println("Die :" + cp);
+				if (cp == 1) {
+					turnScore = 0;
+					System.out.println("TURN OVER NO SCORE ");
+					turn++;
+					totalScore = 0;
+					System.out.println("TURN " + turn);
+				} else {
+					turnScore = turnScore + cp;
+					totalScore = totalScore + cp;
+				}
+				System.out.print("Roll or hold? (r/h) : ");
+				input = sc.next().charAt(0);
+				if (input == 'h') {
+					System.out.println("Score for Turn :" + turnScore);
+					System.out.println("Total Score :" + totalScore);
+					turn++;
+					turnScore = 0;
+					if (totalScore >= 20) {
+						System.out.println("You finished in " + (turn - 1) + "  turns!");
+						break;
+					}
+					System.out.println("TURN " + turn);
+					System.out.print("Roll or hold? (r/h) : ");
+					input = sc.next().charAt(0);
+				}
+			}
+
+			int playerOneScore = turn;
+			System.out.println("Second Player Starts Playing");
+			turn = 1;
+			turnScore = 0;
+			totalScore = 0;
+			System.out.println("Roll or hold? (r/h) : ");
+			input = sc.next().charAt(0);
+			System.out.println("Turn " + turn);
+			while (input == 'r') {
+				int cp = getRandomto6();
+				System.out.println("Die :" + cp);
+				if (cp == 1) {
+					turnScore = 0;
+					System.out.println("TURN OVER NO SCORE ");
+					turn++;
+					totalScore = 0;
+					System.out.println("TURN " + turn);
+				} else {
+					turnScore = turnScore + cp;
+					totalScore = totalScore + cp;
+				}
+				System.out.print("Roll or hold? (r/h) : ");
+				input = sc.next().charAt(0);
+				if (input == 'h') {
+					System.out.println("Score for Turn :" + turnScore);
+					System.out.println("Total Score :" + totalScore);
+					turn++;
+					turnScore = 0;
+					if (totalScore >= 20) {
+						System.out.println("You finished in " + (turn - 1) + "  turns!");
+						break;
+					}
+					System.out.println("TURN " + turn);
+					System.out.print("Roll or hold? (r/h) : ");
+					input = sc.next().charAt(0);
+				}
+			}
+			int playerTwoScore = turn;
+			if (playerOneScore < playerTwoScore) {
+				System.out.println("Player One wins");
+			} else if (playerOneScore > playerTwoScore) {
+				System.out.println("Player Two Wins");
+			} else {
+				if (playerOneScore == playerTwoScore) {
+					System.out.println("Tie");
+				}
+			}
+
+		}
+
+	}
+
+	static int getRandomto6() {
+		int random = (int) (Math.random() * 6) + 1;
+		return random;
+	}
+
+}
