@@ -1,264 +1,336 @@
-const Contact = require("./Contact");
-const ContactInfo = require("./ContactInfo");
+const Contact = require("./Contact")
+const UnAuthorizedError = require("./UnAuthorizedError")
+const NotFound = require("./NotFound")
+const ValidationError = require("./ValidationError")
 class User {
-  static allUser = [];
-  static ID = 1;
+  static Id = 0;
+  static allUsers = []
+  constructor(fullName, gender, country, isAdmin) {
+    this.Id = User.Id++
+    this.fullName = fullName
+    this.gender = gender
+    this.country = country
+    this.isAdmin = isAdmin
+    this.contacts = []
+  }
 
-  constructor(fullName, isAdmin, gender, country) {
-    this.ID = User.ID++;
-    this.fullName = fullName;
-    this.isAdmin = isAdmin;
-    this.gender = gender;
-    this.country = country;
-    this.contacts = [];
+  newUser(fullName, gender, country) {
+    try {
+      if (!this.isAdmin) {
+        throw new UnAuthorizedError("you are not admin")
+      }
+      if (typeof fullName != "string") {
+        throw new ValidationError("full name is not valid")
+      }
+      let userObj = new User(fullName, gender, country, false)
+      User.allUsers.push(userObj)
+      return userObj
+    }
+    catch (error) {
+      return error
+    }
   }
 
   static newAdmin(fullName, gender, country) {
-    if (typeof fullName != "string") {
-      return " Invalid Invalid name";
-    }
-    return new User(fullName, true, gender, country);
-  }
-
-  newUser(fullName) {
-    if (!this.isAdmin) {
-      return " Unauthorized";
-    }
-    let userObj = new User(fullName, false, this.gender, this.country);
-    User.allUser.push(userObj);
-    return userObj;
-  }
-  getAllUsers() {
-    if (!this.isAdmin) {
-      return "Unauthorized";
-    }
-    return User.allUser;
-  }
-
-   getUserById(userId){
-    // console.log(userId)
-    if (!this.isAdmin) {
-      return " Unauthorized";
-    }
-    let [indexOfuser, isUserFind] = User.findUser(userId);
-    // console.log([indexOfuser, isUserFind])
-    if (!isUserFind) {
-      return " User Not Found";
-    }
-
-    return User.allUser[indexOfuser]
-
-      
-
-  }
-  static findUser(userId) {
-    for (let index = 0; index < User.allUser.length; index++) {
-      // console.log(User.allUser[index]);
-      if (userId == User.allUser[index].ID) {
-        return [index, true];
+    try {
+      if (typeof fullName != "string") {
+        throw new ValidationError("full name is not valid")
       }
-    }
-    return [-1, false];
-  }
-
-  updateUsers(userId, parameter, newValue) {
-    if (!this.isAdmin) {
-      return " Unauthorized";
-    }
-    let [indexOfuser, isUserFind] = User.findUser(userId);
-    if (!isUserFind) {
-      return " User Not Found";
-    }
-
-    switch (parameter) {
-      case " fullName ":
-        if (typeof newValue != "string") {
-          return "Invalid full Name Format";
-        }
-        User.allUser[indexOfuser].fullName = newValue;
-        break;
-      case " gender ":
-        if (typeof newValue != "string") {
-          return "Invalid gender ";
-        }
-        User.allUser[indexOfuser].gender = newValue;
-        break;
-      case " country ":
-        if (typeof newValue != "string") {
-          return "Invalid country";
-        }
-        User.allUser[indexOfuser].country = newValue;
-        break;
-      default:
-        return "Parameter not found";
+      return new User(fullName, gender, country, true)
+    } catch (error) {
+      return error
     }
   }
+
+  getAllUsers() {
+    try {
+      if (!this.isAdmin) {
+        throw new UnAuthorizedError("you are not admin")
+      }
+      return User.allUsers
+    } catch (error) {
+      return error
+    }
+  }
+
+  findUser(userID) {
+    try {
+      if (!this.isAdmin) {
+        throw new UnAuthorizedError("you are not admin")
+      }
+      if (typeof userID != "number") {
+        throw new ValidationError("user ID invalid input")
+      }
+      for (let index = 0; index < User.allUsers.length; index++) {
+        if (userID == User.allUsers[index].Id) {
+          return index
+        }
+      }
+      throw new NotFound("user ID not found")
+    } catch (error) {
+      throw error
+    }
+  }
+
+  updateUser(userId, parameter, newValue) {
+    try {
+      if (typeof userId != "number") {
+        throw new ValidationError("user ID is not valid")
+      }
+      if (!this.isAdmin) {
+        throw new UnAuthorizedError("you are not admin")
+      }
+      let indexOfUser = this.findUser(userId)
+      switch (parameter) {
+        case "fullName": if (typeof newValue != "string") { throw new ValidationError("full name is not valid") }
+          User.allUsers[indexOfUser].fullName = newValue
+          return User.allUsers[indexOfUser]
+        case "gender": if (typeof newValue != "string") { throw new ValidationError("gender is not valid") }
+          User.allUsers[indexOfUser].gender = newValue
+          return User.allUsers[indexOfUser]
+        case "country": if (typeof newValue != "string") { throw new ValidationError("country is not valid") }
+          User.allUsers[indexOfUser].country = newValue
+          return User.allUsers[indexOfUser]
+        default: throw new NotFound("parameter not found")
+      }
+    } catch (error) {
+      return error
+    }
+  }
+
   deleteUser(userId) {
-    if (!this.isAdmin) {
-      return " Unauthorized";
+    try {
+      if (typeof userId != "number") {
+        throw new ValidationError("user ID is not valid")
+      }
+      if (!this.isAdmin) {
+        throw new UnAuthorizedError("you are not admin")
+      }
+      let indexOfUser = this.findUser(userId)
+      User.allUsers.splice(indexOfUser, 1)
+      return User.allUsers
+    } catch (error) {
+      return error
     }
-    let [indexOfuser, isUserFind] = User.findUser(userId);
-    if (!isUserFind) {
-      return " User Not Found";
-    }
-    User.allUser.splice(indexOfuser, 1);
   }
 
-  createContact(contactfullName) {
-    if (typeof contactfullName != "string") {
-      return " Invalid contactfullName";
+  createContact(fullName) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof fullName != "string") {
+        throw new ValidationError("full name is not valid")
+      }
+      let createdContact = new Contact(fullName)
+      this.contacts.push(createdContact)
+    } catch (error) {
+      return error
     }
-    let contactCreated = new Contact(contactfullName);
-    this.contacts.push(contactCreated);
-    return contactCreated;
   }
 
-    getContacts(userId) {
-    if (this.isAdmin) {
-      return " Unauthorized";
+  getAllContact() {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      return this.contacts
+    } catch (error) {
+      return error
     }
-    let [indexOfuser, isUserFind] = User.findUser(userId);
-
-  
-    if (!isUserFind) {
-      return " User Not Found";
-    }
-
-    return this.contacts;
   }
 
   findContact(contactId) {
-    for (let index = 0; index < this.contacts.length; index++) {
-      if (contactId == this.contacts[index].Id) {
-        return [index, true];
+    try {
+      for (let i = 0; i < this.contacts.length; i++) {
+        if (contactId == this.contacts[i].getContactId()) {
+          return i
+        }
       }
+      throw new NotFound("contact ID not found")
+    } catch (error) {
+      throw error
     }
-    return [-1, false];
   }
 
   updateContact(contactId, newValue) {
-    if (!this.isAdmin) {
-      return " Unauthorized";
-    }
-    let [indexOfContact, isContactFind] = this.findContact(contactId);
-    if (!isContactFind) {
-      return " Contact Not Found";
-    }
-    this.contacts[indexOfContact] = newValue;
-    return contacts[indexOfContact];
-  }
-
-  createContactDetails(contactId, typeOfContact, valueOfContact) {
-    if (this.isAdmin) {
-      return " Unauthorized";
-    }
-    let [indexOfContact, isContactFind] = this.findContact(contactId);
-
-    if (!isContactFind) {
-      return " Contact Not Found";
-    }
-    let contactDetailsCreated = new ContactInfo(
-      typeOfContact,
-      valueOfContact
-    );
-
-    this.contacts[indexOfContact].contactInfos.push(contactDetailsCreated);
-
-    return contactDetailsCreated;
-  }
-
-  
-    getContactByid(contactId){
+    try {
       if (this.isAdmin) {
-        return " Unauthorized";
+        throw new UnAuthorizedError("you are admin")
       }
-      // console.log( contactId,contactInfoId)
-      let [indexOfContact, isContactExist] = this.findContact(contactId);
-    //   console.log([indexOfContact, isContactExist])
-    
-      if (!isContactExist) {
-        return " contact Not Found";
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
       }
-  
-          return this.contacts[indexOfContact]
+      let indexOfContact = this.findContact(contactId)
+      if (typeof newValue != "string") {
+        throw new ValidationError("full name is not valid")
+      }
+      this.contacts[indexOfContact].updateContactFullName(newValue)
+      return this.contacts[indexOfContact]
+    } catch (error) {
+      return error
     }
-       
-    
-
-  
-
-  getContactInfoByid( contactId,contactInfoId){
-    if (this.isAdmin) {
-      return " Unauthorized";
-    }
-    //  console.log( contactId,contactInfoId)
-    let [indexOfContact, isContactExist] = this.findContact(contactId);
-    // console.log([indexOfContact, isContactExist])
-  
-    if (!isContactExist) {
-      return " contact Not Found";
-    }
-     return this.contacts[indexOfContact].getcontactInfoByid(contactInfoId)
   }
 
-  deleteContact(  contactId){
-    if (this.isAdmin) {
-      return " Unauthorized";
+  deleteContact(contactId) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
+      }
+      let indexOfContact = this.findContact(contactId)
+      this.contacts.splice(indexOfContact, 1)
+    } catch (error) {
+      return error
     }
-    let [indexOfContact, isContactExist] = this.findContact(contactId);
-    if (!isContactExist) {
-      return " Contact Not Found";
-    }
-      this.contacts[indexOfContact].deleteContactDetails()
-       this.contacts.splice(indexOfContact, 1);
   }
 
-
-
-  deleteContactInfo( contactId){
-
-    if (this.isAdmin) {
-      return " Unauthorized";
+  createContactInfo(contactId, typeOfContact, valueOfContact) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
+      }
+      let indexOfContact = this.findContact(contactId)
+      this.contacts[indexOfContact].createContactInfo(typeOfContact, valueOfContact)
+      return this.contacts[indexOfContact]
+    } catch (error) {
+      return error
     }
-    let [indexOfContact, isContactExist] = this.findContact(contactId);
-    if (!isContactExist) {
-      return " Contact Not Found";
-    }
-      this.contacts[indexOfContact].deleteContactDetails()
-      //  this.contacts.splice(indexOfContact, 1);
-  }
-  deleteContactInfoById( contactId,contactInfoId){
-
-    if (this.isAdmin) {
-      return " Unauthorized";
-    }
-    let [indexOfContact, isContactExist] = this.findContact(contactId);
-    if (!isContactExist) {
-      return " Contact Not Found";
-    }
-      this.contacts[indexOfContact].deleteContactDetailsById(contactInfoId)
-      //  this.contacts.splice(indexOfContact, 1);
   }
 
-  
-  
-  
-
-
-
+  getAllContactInfo(contactId) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
+      }
+      let indexOfContact = this.findContact(contactId)
+      this.contacts[indexOfContact].getAllContactInfo()
+      return this.contacts[indexOfContact]
+    } catch (error) {
+      return error
+    }
   }
 
+  updateContactInfo(contactId, contactInfoId, newValue) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
+      }
+      let indexOfContact = this.findContact(contactId)
+      this.contacts[indexOfContact].updateContactInfo(contactInfoId, newValue)
+      return this.contacts[indexOfContact]
+    } catch (error) {
+      return error
+    }
+  }
 
-let admin = User.newAdmin("Yash Shinde", "M", "India");
-let user1 = admin.newUser("Akash Yadav", "M", "India");
-//  user1.createContact("Rohit sabat");
-//  user1.createContactDetails(0, "moblie", "100051005");
-user1.createContact("Nitesh Kumavat");
+  deleteContactInfo(contactId, contactInfoId) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
+      }
+      let indexOfContact = this.findContact(contactId)
+      this.contacts[indexOfContact].deleteContactInfo(contactInfoId)
+      return this.contacts[indexOfContact]
+    } catch (error) {
+      return error
+    }
+  }
 
-console.log(user1.createContactDetails(0, "moblie", "1234567891"));
-user1.createContact("Rohit sabat");
- user1.createContactDetails(1, "moblie", "100051005");
-console.log(user1)
+  getUserById(userId) {
+    try {
+      if (!this.isAdmin) {
+        throw new UnAuthorizedError("you are not admin")
+      }
+      if (typeof userId != "number") {
+        throw new ValidationError("user ID is not valid")
+      }
+      let indexOfUser = this.findUser(userId)
+      return User.allUsers[indexOfUser]
+    } catch (error) {
+      return error
+    }
+  }
 
-console.log(user1.getContactInfoByid(1,1));
-// console.log(user1.getContactInfoByid(1))
+  getContactById(contactId) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
+      }
+      let indexOfContact = this.findContact(contactId)
+      return this.contacts[indexOfContact]
+    } catch (error) {
+      return error
+    }
+  }
+
+  getContactInfoById(contactId, contactInfoId) {
+    try {
+      if (this.isAdmin) {
+        throw new UnAuthorizedError("you are admin")
+      }
+      if (typeof contactId != "number") {
+        throw new ValidationError("contact ID is not valid")
+      }
+      let indexOfContact = this.findContact(contactId)
+      return this.contacts[indexOfContact].getContactInfoById(contactInfoId)
+    } catch (error) {
+      return error
+    }
+  }
+}
+
+let a = User.newAdmin("Yash", "M", "IND")
+let u1 = a.newUser("Akash", "M", "IND")
+let u2 = u1.newUser("Nitish", "M", "IND")
+// console.log(a);
+// console.log(u1);
+// console.log(u2);
+
+// let u3 = a.newUser("Rohit", "M", "IND")
+// console.log(u3);
+// console.log(a.findUser());
+
+
+u1.createContact("Aditya")
+u1.createContact("Omkar")
+
+u1.createContactInfo(0, "mobile", 9167910032)
+u1.createContactInfo(0, "email", "yashshinde@gmail.com")
+// console.log(u1.getAllContact());
+// console.log(u1.getAllContactInfo(0));
+// console.log(a.getUserById(1));  
+// console.log(u1.getContactById(1));
+// console.log(u1.getContactInfoById(0,0));
+// console.log(u1.getAllContactInfo(0));
+// // console.log("-------------------------");
+// console.log(u1.updateContactInfo(0, 0, 7738681076));
+// console.log(u1.getAllContactInfo(0));
+// u1.updateContact(0, "Aditya More")
+// console.log(u1.getContactById(0));
+
+// u1.deleteContact()
+
+// console.log(a.getAllUsers());
+// console.log(u1.getAllContact());
+
+a.updateUser(1, "fullName", "Kumavat")
+console.log(a.getAllUsers());
+// console.log(u1.getAllContact());
