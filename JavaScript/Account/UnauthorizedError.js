@@ -1,9 +1,9 @@
-const BaseError = require("./BaseError");
-
-class UnauthorizedError extends BaseError {
-  constructor(specificMessage) {
-    super("Unauthorized Access", "Unauthorized", 401, specificMessage);
-  }
+const BaseError = require("./BaseError")
+class Unauthorized extends BaseError{
+    constructor(specificMessage){
+        super("UnauthorisedError", "Unauthorised Access", 401)
+        this.specificMessage = specificMessage
+    }
 }
 
-module.exports = UnauthorizedError;
+module.exports = Unauthorized

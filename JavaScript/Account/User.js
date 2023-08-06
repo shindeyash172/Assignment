@@ -1,8 +1,8 @@
 const Account = require("./Account")
 const Bank = require("./Bank")
-const ValidationError = require("./ValidationError")
-const UnauthorizedError = require("./UnAuthorizedError")
-const NotFound = require("./NotFound")
+const ValidationError = require("./error/ValidationError")
+const UnauthorizedError = require("./error/UnAuthorizedError")
+const NotFound = require("./error/NotFound")
 class User{
     static userId = 0
     static allUsers =[]
@@ -227,27 +227,15 @@ class User{
                 throw new ValidationError("bank ID not valid")
             }
             let createdAccount = new Account(balance)
-            this.accounts.push(createdAccount)
             let indexOfBank = this.findBank(bankId)
             User.allBanks[indexOfBank].accountsInBank.push(createdAccount)
+            this.accounts.push(createdAccount)
             return this.accounts
         } catch (error) {
             return error
         }
     }
 
-   
-
-    getAllAccount(){
-        try {
-            if(this.isAdmin){
-                throw new UnauthorizedError("you are not user")
-            }
-            return this.accounts
-        } catch (error) {
-            return error
-        }
-    }
     findAccount(accountId){
         try {
             if(this.isAdmin){
@@ -266,6 +254,18 @@ class User{
             throw error   
         }
     }
+
+    getAllAccount(){
+        try {
+            if(this.isAdmin){
+                throw new UnauthorizedError("you are not user")
+            }
+            return this.accounts
+        } catch (error) {
+            return error
+        }
+    }
+
     deleteAccount(accountId){
         try {
             if(this.isAdmin){
@@ -331,11 +331,27 @@ class User{
             }
             throw new NotFound("receiver account not found")
         } catch (error) {
-            throw error
+            throw error.specificMessage
         }
     }
 
-   
+    transfer(amount, fromAccoutId, receiverUserId, receiverAccountId){
+        try {
+            if(this.isAdmin){
+                throw new UnauthorizedError("you are not user")
+            }
+            let indexOfReceiver = this.findUser(receiverUserId) 
+            let reciever = User.allUsers[indexOfReceiver]
+            let indexOfReceiverAccount = this.findReceiverAccount(reciever, receiverAccountId)
+            let indexOfSenderAccount = this.findAccount(fromAccoutId)
+            this.accounts[indexOfSenderAccount].withdraw(amount)
+            reciever.accounts[indexOfReceiverAccount].deposit(amount)
+            return this.accounts
+        } 
+        catch (error) {
+            return error
+        }
+    }
 
     getPassBook(accountId){
         try {
@@ -353,7 +369,24 @@ class User{
         }
     }
 
-    
+    getNetworth(userId){
+        try {
+            if(typeof userId != "number"){
+                throw new ValidationError("user ID not valid")
+            }
+            let indexOfUser = this.findUser(userId)
+            let userAccounts = User.allUsers[indexOfUser].getAllAccount()
+            let netWorth = 0
+            for (let index = 0; index < userAccounts.length; index++) {
+                netWorth = netWorth + userAccounts[index].getBalance()      
+            }
+            return netWorth
+        } 
+        catch (error) {
+            return error
+        }
+    }
+
     getAccountsInBank(bankId){
         try {
             if(!this.isAdmin){
@@ -368,6 +401,31 @@ class User{
             return error
         }
     }
-
-
 }
+
+
+let a = User.newAdmin("yash", 21, "M")
+let u1 = a.newUser("akash", 23, "M")
+let u2 = a.newUser("omkar", 22, "M")
+let b1 = a.newBank("Kotak")
+let b2 = a.newBank("Icici")
+
+u1.createAccount(0, 19000)
+u1.createAccount(1, 25000)
+console.log(u1.getAllAccount());
+
+u1.deposit(0, 7000)
+console.log(u1.getAllAccount());
+
+u2.createAccount(0, 15000)
+console.log(u2.getAllAccount());
+
+console.log(u2.transfer(50000, 2, 1, 0))
+console.log(a.getAccountsInBank(0));
+
+console.log(u1.getPassBook(0));
+
+console.log(u2.getPassBook(2));
+
+console.log("networth of u1 : ", u1.getNetworth(0))
+console.log("networth of U2 : ", u2.getNetworth(1));

@@ -1,4 +1,4 @@
-class Passbook{
+class PassBook{
     constructor(date, status, amount, balance){
         this.date = date
         this.status = status
@@ -7,4 +7,4 @@ class Passbook{
     }
 }
 
-module.exports = Passbook
+module.exports = PassBook

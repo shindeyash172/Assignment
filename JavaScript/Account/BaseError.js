@@ -1,9 +1,10 @@
 class BaseError extends Error{
-    constructor(message,name,httpstatuscode,specificMessage){
-    super(message,name)
+    constructor(name, message, httpsStatusCode, specificMessage){
+        super(message)
         this.name = name
-        this.httpstatuscode = httpstatuscode
-        this.speceficMessage = specificMessage
+        this.httpsStatusCode = httpsStatusCode
+        this.specificMessage = specificMessage
     }
 }
+
 module.exports = BaseError
